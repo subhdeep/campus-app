@@ -11,5 +11,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependeny folder eg: vendor
+# Dependency folder eg: vendor
 vendor/
+
+# Compiled file
+campus-app
