@@ -1,10 +1,15 @@
 package controllers
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"net/smtp"
+	"time"
 
 	"github.com/kataras/iris"
+	"github.com/subhdeep/campus-app/config"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
 // LoginCred struct
@@ -13,10 +18,11 @@ type LoginCred struct {
 	Password string `json:"password" xml:"username" form:"username" validate:"required"`
 }
 
-// LoginResponse struct
-type LoginResponse struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+// LoginAuthCred struct
+type LoginAuthCred struct {
+	Username  string `json:"username" validate:"required"`
+	Timestamp string `json:"timestamp" validate:"required"`
+	Auth      string `json:"auth" validate:"required"`
 }
 
 // unencryptedAuth struct
@@ -31,22 +37,64 @@ func (a unencryptedAuth) Start(server *smtp.ServerInfo) (string, []byte, error) 
 	return a.Auth.Start(&s)
 }
 
-// Login of a user
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+}
+
+// IsAuthenticated is used to check if a request is authorized
+func IsAuthenticated(ctx iris.Context) {
+	loginAuth := LoginAuthCred{
+		Username:  ctx.GetCookie("username"),
+		Timestamp: ctx.GetCookie("timestamp"),
+		Auth:      ctx.GetCookie("auth"),
+	}
+
+	if err := validate.Struct(loginAuth); err != nil {
+		ctx.StatusCode(iris.StatusUnauthorized)
+		return
+	}
+
+	if checkHash(loginAuth) {
+		ctx.Next()
+	} else {
+		ctx.StatusCode(iris.StatusForbidden)
+	}
+}
+
+// Login is used to perform the login of a user
 func Login(ctx iris.Context) {
 
 	user := LoginCred{}
 	errReq := ctx.ReadJSON(&user)
 	if errReq != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.Text(errReq.Error())
-	} else {
-		if checkLoginCred(&user) {
-			fmt.Println("Connection is successfull")
-			ctx.StatusCode(iris.StatusOK)
-		} else {
-			ctx.StatusCode(iris.StatusForbidden)
-		}
+		return
 	}
+	err := validate.Struct(user)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		return
+	}
+	if !checkLoginCred(&user) {
+		ctx.StatusCode(iris.StatusForbidden)
+		return
+	}
+	username := user.Username
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	// TODO shift to a config file
+	secret := config.CookieSecret
+	hashValue := []byte(username + ":" + timestamp + ":" + secret)
+	hasher := sha256.New()
+	hasher.Write(hashValue)
+	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	expiry := (7 * 24 * time.Hour)
+	ctx.SetCookieKV("username", user.Username, iris.CookieExpires(expiry))
+	ctx.SetCookieKV("timestamp", timestamp, iris.CookieExpires(expiry))
+	ctx.SetCookieKV("auth", sha, iris.CookieExpires(expiry))
+	ctx.StatusCode(iris.StatusOK)
+
 }
 
 func checkLoginCred(cred *LoginCred) bool {
@@ -54,10 +102,8 @@ func checkLoginCred(cred *LoginCred) bool {
 	conn, err := smtp.Dial(hostname + ":25")
 	if err != nil {
 		fmt.Println(err.Error())
-		fmt.Println("Connection Failed")
 		return false
 	}
-	fmt.Println(cred)
 	defer conn.Close()
 	auth := unencryptedAuth{
 		smtp.PlainAuth(
@@ -68,10 +114,14 @@ func checkLoginCred(cred *LoginCred) bool {
 		),
 	}
 	err = conn.Auth(auth)
-	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("Authentication Failed")
-		return false
-	}
-	return true
+	return err == nil
+}
+
+func checkHash(loginAuth LoginAuthCred) bool {
+	secret := config.CookieSecret
+	hashValue := []byte(loginAuth.Username + ":" + loginAuth.Timestamp + ":" + secret)
+	hasher := sha256.New()
+	hasher.Write(hashValue)
+	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	return loginAuth.Auth == sha
 }
