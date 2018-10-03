@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/kataras/iris"
 
 	"github.com/subhdeep/campus-app/config"
@@ -15,5 +17,5 @@ func main() {
 	router.CampusAppRoutes(app)
 
 	// listen and serve on http://0.0.0.0:8080.
-	app.Run(iris.Addr(":" + string(config.HTTPPort)))
+	app.Run(iris.Addr(fmt.Sprintf(":%d", config.HTTPPort)))
 }
