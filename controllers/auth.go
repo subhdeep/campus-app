@@ -12,19 +12,11 @@ import (
 	"github.com/subhdeep/campus-app/config"
 )
 
-// LoginCred struct
-type LoginCred struct {
-	Username string `json:"username" xml:"username" form:"username" validate:"required"`
-	Password string `json:"password" xml:"password" form:"password" validate:"required"`
+type loginCred struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
-// LoginAuthCred struct
-type LoginAuthCred struct {
-	Username  string `json:"username" validate:"required"`
-	Timestamp string `json:"timestamp" validate:"required"`
-}
-
-// unencryptedAuth struct
 type unencryptedAuth struct {
 	smtp.Auth
 }
@@ -45,25 +37,10 @@ var (
 	validate = validator.New()
 )
 
-// IsAuthenticated is used to check if a request is authorized
-func IsAuthenticated(ctx iris.Context) {
-	loginAuth := LoginAuthCred{
-		Username:  ctx.GetCookie("username", iris.CookieDecode(sc.Decode)),
-		Timestamp: ctx.GetCookie("timestamp", iris.CookieDecode(sc.Decode)),
-	}
-
-	if err := validate.Struct(loginAuth); err != nil {
-		ctx.StatusCode(iris.StatusUnauthorized)
-		return
-	}
-
-	ctx.Next()
-}
-
 // Login is used to perform the login of a user
 func Login(ctx iris.Context) {
 
-	user := LoginCred{}
+	user := loginCred{}
 	errReq := ctx.ReadJSON(&user)
 	if errReq != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
@@ -87,7 +64,7 @@ func Login(ctx iris.Context) {
 
 }
 
-func checkLoginCred(cred *LoginCred, ctx iris.Context) bool {
+func checkLoginCred(cred *loginCred, ctx iris.Context) bool {
 	hostname := config.SMTPHost
 	port := config.SMTPPort
 	conn, err := smtp.Dial(fmt.Sprintf("%s:%d", hostname, port))
