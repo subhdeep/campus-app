@@ -12,6 +12,12 @@ var HTTPPort int
 // CookieSecret which is used for hashing cookies
 var CookieSecret string
 
+// SMTPHost for authenticating login
+var SMTPHost string
+
+// SMTPPort for authenticating login
+var SMTPPort int
+
 // InitConfig initialises the configuration of the app
 func InitConfig() {
 	viper.SetConfigName("config")
@@ -23,4 +29,7 @@ func InitConfig() {
 
 	HTTPPort = viper.GetInt("http.port")
 	CookieSecret = viper.GetString("secret.value")
+
+	SMTPPort = viper.GetInt("smtp.port")
+	SMTPHost = viper.GetString("smtp.host")
 }

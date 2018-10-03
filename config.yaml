@@ -2,3 +2,6 @@ http:
   port: 8080
 secret:
   value: "campus-app"
+smtp:
+  host: "smtp.cc.iitk.ac.in"
+  port: 25

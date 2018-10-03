@@ -88,10 +88,11 @@ func Login(ctx iris.Context) {
 }
 
 func checkLoginCred(cred *LoginCred, ctx iris.Context) bool {
-	hostname := "smtp.cc.iitk.ac.in"
-	conn, err := smtp.Dial(hostname + ":25")
+	hostname := config.SMTPHost
+	port := config.SMTPPort
+	conn, err := smtp.Dial(fmt.Sprintf("%s:%d", hostname, port))
 	if err != nil {
-		ctx.Application().Logger().Warnf("Error occurred while checking login credentials: %s\n", err.Error())
+		ctx.Application().Logger().Warnf("Error occurred while checking login credentials: %s", err.Error())
 		return false
 	}
 	defer conn.Close()
