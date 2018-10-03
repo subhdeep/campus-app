@@ -101,6 +101,14 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
+
+[[projects]]
   digest = "1:77395dd3847dac9c45118c668f5dab85aedf0163dc3b38aea6578c5cf0d502f9"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
@@ -168,7 +176,7 @@
   revision = "03be101463868edc5a81f094fc68a5f6c1b5503a"
 
 [[projects]]
-  digest = "1:6d39c45ae54b0c56748f3e622bebd0d5cc73bf40dca6889980e48bc6fdf77a32"
+  digest = "1:fa2e0692b16f98435b76536d888391f060d312d2e4ba03af9391b47903672ae3"
   name = "github.com/kataras/iris"
   packages = [
     ".",
@@ -197,6 +205,7 @@
     "middleware/logger",
     "middleware/recover",
     "view",
+    "websocket",
   ]
   pruneopts = "UT"
   revision = "217d9feadc0fc5b317826a901065e0c4c27d3cad"
@@ -377,6 +386,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:f52b91ab1b58aa5217d6094865dda519f75296c3884380526cd127bc19f02461"
+  name = "github.com/valyala/bytebufferpool"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cdfbe9377474227bb42120c1e22fd4433e7f69bf"
+
+[[projects]]
+  branch = "master"
   digest = "1:dedf20eb0d3e8d6aa8a4d3d2fae248222b688ed528201995e152cc497899123c"
   name = "golang.org/x/crypto"
   packages = [
@@ -460,6 +477,7 @@
   input-imports = [
     "github.com/gorilla/securecookie",
     "github.com/kataras/iris",
+    "github.com/kataras/iris/websocket",
     "github.com/spf13/viper",
     "gopkg.in/go-playground/validator.v9",
   ]

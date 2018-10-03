@@ -35,5 +35,6 @@ func IsAuthenticated(ctx iris.Context) {
 		return
 	}
 
+	ctx.Values().Save("userID", loginAuth.Username, true)
 	ctx.Next()
 }

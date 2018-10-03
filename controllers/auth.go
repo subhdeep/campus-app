@@ -64,6 +64,11 @@ func Login(ctx iris.Context) {
 
 }
 
+// Check is used to check if user is authenticated at the beginning of connection
+func Check(ctx iris.Context) {
+	ctx.StatusCode(iris.StatusOK)
+}
+
 func checkLoginCred(cred *loginCred, ctx iris.Context) bool {
 	hostname := config.SMTPHost
 	port := config.SMTPPort
