@@ -17,6 +17,10 @@ type loginCred struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type loginResponse struct {
+	Username string `json:"username"`
+}
+
 type unencryptedAuth struct {
 	smtp.Auth
 }
@@ -60,7 +64,10 @@ func Login(ctx iris.Context) {
 	expiry := (7 * 24 * time.Hour)
 	ctx.SetCookieKV("username", username, iris.CookieEncode(sc.Encode), iris.CookieExpires(expiry))
 	ctx.SetCookieKV("timestamp", timestamp, iris.CookieEncode(sc.Encode), iris.CookieExpires(expiry))
-	ctx.StatusCode(iris.StatusOK)
+
+	ctx.JSON(loginResponse{
+		Username: username,
+	})
 
 }
 
