@@ -73,7 +73,10 @@ func Login(ctx iris.Context) {
 
 // Check is used to check if user is authenticated at the beginning of connection
 func Check(ctx iris.Context) {
-	ctx.StatusCode(iris.StatusOK)
+	username := ctx.Values().Get("userID").(string)
+	ctx.JSON(loginResponse{
+		Username: username,
+	})
 }
 
 func checkLoginCred(cred *loginCred, ctx iris.Context) bool {
