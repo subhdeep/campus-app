@@ -3,6 +3,8 @@ package controllers
 import (
 	"encoding/json"
 
+	"github.com/subhdeep/campus-app/models"
+
 	"github.com/kataras/golog"
 	"github.com/kataras/iris/context"
 	"github.com/kataras/iris/websocket"
@@ -12,31 +14,17 @@ var ws *websocket.Server
 
 var connections map[string][]websocket.Connection
 
-type MessageType string
+// Type casts the chat models
+// type (
+// 	MessageType         string
+// 	ServerClientMessage models.ServerClientMessage
+// 	ServerChatMessage   models.ServerChatMessage
+// 	ClientChatMessage   models.ClientChatMessage
+// )
 
 const (
-	Chat MessageType = "chat"
+	Chat models.MessageType = "chat"
 )
-
-// ServerClientMessage is the generic message exchanged between
-// client and server.
-type ServerClientMessage struct {
-	Type    MessageType `json:"type"`
-	Message []byte      `json:"message"`
-}
-
-// ClientChatMessage is the chat message sent from a client to the
-// server.
-type ClientChatMessage struct {
-	To   string `json:"to"`
-	Body string `json:"body"`
-}
-
-// ServerChatMessage is the chat message sent from the server to the client
-type ServerChatMessage struct {
-	From string `json:"from"`
-	Body string `json:"body"`
-}
 
 func init() {
 	ws = websocket.New(websocket.Config{})
@@ -79,7 +67,7 @@ func websocketConnectionHandler(c websocket.Connection) {
 
 func websocketMessageHandler(userID string, logger *golog.Logger) func([]byte) {
 	return func(b []byte) {
-		var msg ServerClientMessage
+		var msg models.ServerClientMessage
 		if err := json.Unmarshal(b, &msg); err != nil {
 			logger.Errorf("Invalid message: %v", err)
 			return
@@ -92,20 +80,22 @@ func websocketMessageHandler(userID string, logger *golog.Logger) func([]byte) {
 }
 
 func chatHandler(userID string, logger *golog.Logger, msg []byte) {
-	var chatMsg ClientChatMessage
-	if err := json.Unmarshal(msg, &chatMsg); err != nil {
+	var clientChatMsg models.ClientChatMessage
+	if err := json.Unmarshal(msg, &clientChatMsg); err != nil {
 		logger.Errorf("Invalid message: %v", err)
 		return
 	}
+	// TODO need to save the msg to the database.
+	chatMsg := models.CreateChatMessage(&clientChatMsg, userID)
 	logger.Infof("Message: %s from %s to %s", chatMsg.Body, userID, chatMsg.To)
-	c1, ok := connections[chatMsg.To]
+	c1, ok := connections[clientChatMsg.To]
 	if !ok || len(c1) == 0 {
-		logger.Infof("%s is not online. Unable to send message", chatMsg.To)
+		logger.Infof("%s is not online. Unable to send message", clientChatMsg.To)
 		return
 	}
-	var serverMsg = ServerChatMessage{
+	var serverMsg = models.ServerChatMessage{
 		From: userID,
-		Body: chatMsg.Body,
+		Body: clientChatMsg.Body,
 	}
 	marshalled, err := json.Marshal(&serverMsg)
 	if err != nil {
