@@ -14,16 +14,9 @@ var ws *websocket.Server
 
 var connections map[string][]websocket.Connection
 
-// Type casts the chat models
-// type (
-// 	MessageType         string
-// 	ServerClientMessage models.ServerClientMessage
-// 	ServerChatMessage   models.ServerChatMessage
-// 	ClientChatMessage   models.ClientChatMessage
-// )
-
 const (
-	Chat models.MessageType = "chat"
+	Chat    models.MessageType = "chat"
+	ChatAck models.MessageType = "chat-ack"
 )
 
 func init() {
@@ -101,7 +94,7 @@ func chatHandler(userID string, logger *golog.Logger, msg []byte, userCon websoc
 	}
 
 	var clntSvrMsg = models.ServerClientMessage{
-		Type:    "chat-ack",
+		Type:    ChatAck,
 		Message: marshalled,
 	}
 

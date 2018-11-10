@@ -56,3 +56,10 @@ func CreateChatMessage(chatMsg *ClientChatMessage, userID string) *ChatMessage {
 	db.Create(&msg)
 	return &msg
 }
+
+// GetMessages function retrieves the messages from a given timestamp
+func GetMessages(username string, offset time.Time, limit int) []ChatMessage {
+	var msgs []ChatMessage
+	db.Where(ChatMessage{To: username}).Or(ChatMessage{From: username}).Where("created_at < ?", offset).Limit(limit).Find(&msgs)
+	return msgs
+}
