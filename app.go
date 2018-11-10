@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/kataras/iris"
 
 	"github.com/subhdeep/campus-app/config"
