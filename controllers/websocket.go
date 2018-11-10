@@ -72,9 +72,15 @@ func websocketMessageHandler(userID string, logger *golog.Logger, userCon websoc
 	}
 }
 
-func chatHandler(userID string, logger *golog.Logger, msg []byte, userCon websocket.Connection) {
+func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	var clientChatMsgBytes []byte
+	clientChatMsgBytes, err := json.Marshal(msg)
+	if err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
 	var clientChatMsg models.ClientChatMessage
-	if err := json.Unmarshal(msg, &clientChatMsg); err != nil {
+	if err := json.Unmarshal(clientChatMsgBytes, &clientChatMsg); err != nil {
 		logger.Errorf("Invalid message: %v", err)
 		return
 	}

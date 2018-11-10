@@ -10,7 +10,7 @@ type MessageType string
 // client and server.
 type ServerClientMessage struct {
 	Type    MessageType `json:"type"`
-	Message []byte      `json:"message"`
+	Message interface{} `json:"message"`
 }
 
 // ClientChatMessage is the chat message sent from a client to the
@@ -18,7 +18,7 @@ type ServerClientMessage struct {
 type ClientChatMessage struct {
 	To   string `json:"to"`
 	Body string `json:"body"`
-	TID  string `json:"tid"`
+	TID  int    `json:"tid"`
 }
 
 // ClientAckMessage is the acknowledment messaage sent from the server to the client
@@ -26,7 +26,7 @@ type ClientAckMessage struct {
 	ID   string `json:"id"`
 	To   string `json:"to"`
 	Body string `json:"body"`
-	TID  string `json:"tid"`
+	TID  int    `json:"tid"`
 }
 
 // ServerChatMessage is the chat message sent from the server to the client
