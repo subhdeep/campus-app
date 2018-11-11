@@ -71,6 +71,11 @@ func Login(ctx iris.Context) {
 
 }
 
+func Logout(ctx iris.Context) {
+	ctx.RemoveCookie("username")
+	ctx.RemoveCookie("timestamp")
+}
+
 // Check is used to check if user is authenticated at the beginning of connection
 func Check(ctx iris.Context) {
 	username := ctx.Values().Get("userID").(string)

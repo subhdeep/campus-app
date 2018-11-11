@@ -12,6 +12,7 @@ func CampusAppRoutes(app *iris.Application) {
 	user := app.Party("/user")
 	user.Get("/me", middlewares.IsAuthenticated, controllers.Check)
 	user.Post("/login", controllers.Login)
+	user.Post("/logout", middlewares.IsAuthenticated, controllers.Logout)
 
 	app.Get("/ws", middlewares.IsAuthenticated, controllers.Websocket())
 	app.Get("/messages", middlewares.IsAuthenticated, controllers.GetMessages)
