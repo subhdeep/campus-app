@@ -73,6 +73,7 @@ func websocketMessageHandler(userID string, logger *golog.Logger, userCon websoc
 }
 
 func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	// Get Client Chat Message from interface
 	var clientChatMsgBytes []byte
 	clientChatMsgBytes, err := json.Marshal(msg)
 	if err != nil {
@@ -84,55 +85,40 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		logger.Errorf("Invalid message: %v", err)
 		return
 	}
+
 	// Save message to the DB
 	chatMsg := models.CreateChatMessage(&clientChatMsg, userID)
 	logger.Infof("Message: %s from %s to %s", chatMsg.Body, userID, chatMsg.To)
-	var clientAckMsg = models.ClientAckMessage{
-		ID:   chatMsg.ID,
-		To:   clientChatMsg.To,
-		TID:  clientChatMsg.TID,
-		Body: clientChatMsg.Body,
-	}
-	marshalled, err := json.Marshal(&clientAckMsg)
-	if err != nil {
-		logger.Errorf("Unable to marshal message: %v", err)
-		return
-	}
 
+	// Sending to ack back to sender
+	var clientAckMsg = models.ClientAckMessage{
+		ChatMessage: chatMsg,
+		TID:         clientChatMsg.TID,
+	}
 	var clntSvrMsg = models.ServerClientMessage{
 		Type:    ChatAck,
-		Message: marshalled,
+		Message: clientAckMsg,
 	}
-
-	marshalled, err = json.Marshal(&clntSvrMsg)
+	marshalled, err := json.Marshal(clntSvrMsg)
 	if err != nil {
 		logger.Errorf("Unable to marshal message: %v", err)
 	}
-
 	err = userCon.EmitMessage(marshalled)
 	if err != nil {
 		logger.Errorf("Unable to send the message: %v", err)
 	}
+
+	// Sending to recipient user's online clients
 	c1, ok := connections[clientChatMsg.To]
 	if !ok || len(c1) == 0 {
 		logger.Infof("%s is not online. Unable to send message", clientChatMsg.To)
 		return
 	}
-	var serverMsg = models.ServerChatMessage{
-		From: userID,
-		Body: clientChatMsg.Body,
-		ID:   chatMsg.ID,
-	}
-	marshalled, err = json.Marshal(&serverMsg)
-	if err != nil {
-		logger.Errorf("Unable to marshal message: %v", err)
-		return
-	}
 	clntSvrMsg = models.ServerClientMessage{
 		Type:    Chat,
-		Message: marshalled,
+		Message: chatMsg,
 	}
-	marshalled, err = json.Marshal(&clntSvrMsg)
+	marshalled, err = json.Marshal(clntSvrMsg)
 	if err != nil {
 		logger.Errorf("Unable to marshal message: %v", err)
 		return

@@ -11,12 +11,13 @@ import (
 
 func GetMessages(ctx iris.Context) {
 	user := ctx.Values().Get("userID").(string)
+	otherUser := ctx.URLParam("username")
 	offsetParam := ctx.URLParam("offset")
 	limitParam := ctx.URLParam("limit")
 
 	var err error
 
-	var limit = 10
+	var limit = 50
 	if limitParam != "" {
 		limit, err = strconv.Atoi(limitParam)
 		if err != nil {
@@ -37,5 +38,9 @@ func GetMessages(ctx iris.Context) {
 		}
 	}
 
-	ctx.JSON(models.GetMessages(user, offset, limit))
+	messages := models.GetMessages(user, otherUser, offset, limit)
+	if len(messages) == limit {
+		ctx.Header("Link", fmt.Sprintf("<%s/%s?username=%s&offset=%s&limit=%d>; rel=\"next\"", ctx.Host(), ctx.Path(), otherUser, messages[len(messages)-1].CreatedAt.Format(time.RFC3339Nano), limit))
+	}
+	ctx.JSON(messages)
 }
