@@ -13,8 +13,6 @@ import (
 func main() {
 	app := iris.Default()
 
-	config.InitConfig()
-
 	router.CampusAppRoutes(app)
 
 	// listen and serve on http://0.0.0.0:8080.

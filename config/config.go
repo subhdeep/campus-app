@@ -18,8 +18,16 @@ var SMTPHost string
 // SMTPPort for authenticating login
 var SMTPPort int
 
+var RedisHost string
+var RedisPort int
+
+var PGHost string
+var PGPort int
+var PGDB string
+var PGUser string
+
 // InitConfig initialises the configuration of the app
-func InitConfig() {
+func init() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
@@ -32,4 +40,12 @@ func InitConfig() {
 
 	SMTPPort = viper.GetInt("smtp.port")
 	SMTPHost = viper.GetString("smtp.host")
+
+	RedisPort = viper.GetInt("redis.port")
+	RedisHost = viper.GetString("redis.host")
+
+	PGPort = viper.GetInt("postgres.port")
+	PGHost = viper.GetString("postgres.host")
+	PGUser = viper.GetString("postgres.username")
+	PGDB = viper.GetString("postgres.dbname")
 }

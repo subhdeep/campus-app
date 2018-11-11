@@ -5,3 +5,11 @@ secret:
 smtp:
   host: "smtp.cc.iitk.ac.in"
   port: 25
+redis:
+  host: "localhost"
+  port: 6379
+postgres:
+  username: "subho"
+  host: "localhost"
+  port: 26257
+  dbname: "web_app"

@@ -1,21 +1,24 @@
 package models
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/subhdeep/campus-app/config"
 )
 
 var db *gorm.DB
 
 func init() {
-	const addr = "postgresql://subho@localhost:26257/web_app?sslmode=disable"
+	var addr = fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable", config.PGUser, "", config.PGHost, config.PGPort, config.PGDB)
+
 	var err error
 	db, err = gorm.Open("postgres", addr)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error while connecting to Database: %v", err)
 	}
 
 	db.AutoMigrate(&ChatMessage{})
