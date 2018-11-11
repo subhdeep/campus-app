@@ -88,6 +88,7 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 
 	// Save message to the DB
 	chatMsg := models.CreateChatMessage(&clientChatMsg, userID)
+	models.CreateRecentMessage(chatMsg, userID, chatMsg.To)
 	logger.Infof("Message: %s from %s to %s", chatMsg.Body, userID, chatMsg.To)
 
 	// Sending to ack back to sender

@@ -19,4 +19,5 @@ func init() {
 	}
 
 	db.AutoMigrate(&ChatMessage{})
+	db.AutoMigrate(&RecentMessage{})
 }

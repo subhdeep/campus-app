@@ -15,4 +15,5 @@ func CampusAppRoutes(app *iris.Application) {
 
 	app.Get("/ws", middlewares.IsAuthenticated, controllers.Websocket())
 	app.Get("/messages", middlewares.IsAuthenticated, controllers.GetMessages)
+	app.Get("/recents", middlewares.IsAuthenticated, controllers.GetRecents)
 }
