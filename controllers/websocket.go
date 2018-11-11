@@ -110,12 +110,6 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		logger.Errorf("Unable to send the message: %v", err)
 	}
 
-	// Sending to recipient user's online clients
-	c1, ok := connections[clientChatMsg.To]
-	if !ok || len(c1) == 0 {
-		logger.Infof("%s is not online. Unable to send message", clientChatMsg.To)
-		return
-	}
 	clntSvrMsg = models.ServerClientMessage{
 		Type:    Chat,
 		Message: chatMsg,
@@ -125,10 +119,34 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		logger.Errorf("Unable to marshal message: %v", err)
 		return
 	}
+
+	// Sending message to sender's other clients
+	c1, ok := connections[userID]
+	if !ok || len(c1) == 0 {
+		logger.Infof("%s is not online. Unable to send message", userID)
+		return
+	}
 	for _, con := range c1 {
-		err = con.EmitMessage(marshalled)
-		if err != nil {
-			logger.Errorf("Unable to send message: %v", err)
+		if con.ID() != userCon.ID() {
+			err = con.EmitMessage(marshalled)
+			if err != nil {
+				logger.Errorf("Unable to send message: %v", err)
+			}
+		}
+	}
+
+	// Sending to recipient user's online clients
+	if userID != clientChatMsg.To {
+		c1, ok := connections[clientChatMsg.To]
+		if !ok || len(c1) == 0 {
+			logger.Infof("%s is not online. Unable to send message", clientChatMsg.To)
+			return
+		}
+		for _, con := range c1 {
+			err = con.EmitMessage(marshalled)
+			if err != nil {
+				logger.Errorf("Unable to send message: %v", err)
+			}
 		}
 	}
 }
