@@ -60,6 +60,7 @@ func websocketConnectionHandler(c websocket.Connection) {
 
 func websocketMessageHandler(userID string, logger *golog.Logger, userCon websocket.Connection) func([]byte) {
 	return func(b []byte) {
+		models.MarkOnline(userID)
 		var msg models.ServerClientMessage
 		if err := json.Unmarshal(b, &msg); err != nil {
 			logger.Errorf("Invalid message: %v", err)

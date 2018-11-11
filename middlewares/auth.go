@@ -6,6 +6,7 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 
 	"github.com/subhdeep/campus-app/config"
+	"github.com/subhdeep/campus-app/models"
 )
 
 var (
@@ -36,5 +37,6 @@ func IsAuthenticated(ctx iris.Context) {
 	}
 
 	ctx.Values().Save("userID", loginAuth.Username, true)
+	models.MarkOnline(loginAuth.Username)
 	ctx.Next()
 }
