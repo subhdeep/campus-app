@@ -17,7 +17,7 @@ func GetMessages(ctx iris.Context) {
 
 	var err error
 
-	var limit = 50
+	var limit = 20
 	if limitParam != "" {
 		limit, err = strconv.Atoi(limitParam)
 		if err != nil {
@@ -40,7 +40,7 @@ func GetMessages(ctx iris.Context) {
 
 	messages := models.GetMessages(user, otherUser, offset, limit)
 	if len(messages) == limit {
-		ctx.Header("Link", fmt.Sprintf("<%s/%s?username=%s&offset=%s&limit=%d>; rel=\"next\"", ctx.Host(), ctx.Path(), otherUser, messages[len(messages)-1].CreatedAt.Format(time.RFC3339Nano), limit))
+		ctx.Header("Link", fmt.Sprintf("%s?username=%s&offset=%s&limit=%d", ctx.Path(), otherUser, messages[len(messages)-1].CreatedAt.Format(time.RFC3339Nano), limit))
 	}
 	ctx.JSON(messages)
 }
