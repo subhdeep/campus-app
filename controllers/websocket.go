@@ -105,7 +105,6 @@ func webRTCHandler(userID models.Username, logger *golog.Logger, msg interface{}
 		return
 	}
 	webRTC.FromID = models.ConnID(userCon.ID())
-	// TODO: Forward this message to webRTC.ToID
 	models.PublishWebRTCMessage(webRTC)
 }
 

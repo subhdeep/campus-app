@@ -17,6 +17,7 @@ type WebRTCAckMessage struct {
 // WebRTC is a message between two clients who have decided to
 // link up via WebRTC.
 type WebRTCMessage struct {
-	ToID   ConnID `json:"toID"`
-	FromID ConnID `json:"fromID"`
+	ToID   ConnID      `json:"toID"`
+	FromID ConnID      `json:"fromID"`
+	Body   interface{} `json:"body"`
 }

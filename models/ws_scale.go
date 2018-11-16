@@ -20,7 +20,7 @@ type publishChatPayload struct {
 }
 
 func init() {
-	WS = websocket.New(websocket.Config{})
+	WS = websocket.New(websocket.Config{MaxMessageSize: 4096})
 	connections = make(map[Username][]websocket.Connection)
 }
 
@@ -162,7 +162,7 @@ func processWebRTCAckMessage(msg WebRTCAckMessage) {
 
 func processWebRTCMessage(msg WebRTCMessage) {
 	clntSvrMsg := ServerClientMessage{
-		Type:    WebRTCAck,
+		Type:    WebRTC,
 		Message: msg,
 	}
 	marshalled, err := json.Marshal(clntSvrMsg)
