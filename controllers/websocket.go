@@ -10,51 +10,23 @@ import (
 	"github.com/kataras/iris/websocket"
 )
 
-var ws *websocket.Server
-
-var connections map[string][]websocket.Connection
-
-const (
-	Chat    models.MessageType = "chat"
-	ChatAck models.MessageType = "chat-ack"
-)
-
 func init() {
-	ws = websocket.New(websocket.Config{})
-	connections = make(map[string][]websocket.Connection)
-
-	ws.OnConnection(websocketConnectionHandler)
-
+	models.WS.OnConnection(websocketConnectionHandler)
 }
 
 // Websocket is the context handler for websocket connections
 func Websocket() context.Handler {
-	return ws.Handler()
+	return models.WS.Handler()
 }
 
 func websocketConnectionHandler(c websocket.Connection) {
 	ctx := c.Context()
 	logger := ctx.Application().Logger()
 	userID := ctx.Values().Get("userID").(string)
-	connections[userID] = append(connections[userID], c)
+	models.AddConnection(userID, c)
 	c.OnMessage(websocketMessageHandler(userID, logger, c))
 	c.OnError(func(err error) {
 		logger.Warnf("Error occurred for %s: %v", userID, err)
-	})
-	c.OnDisconnect(func() {
-		logger.Infof("Disconnected from %s", userID)
-		c1, ok := connections[userID]
-		if !ok || len(c1) == 0 {
-			logger.Infof("%s is not online. Unable to disconnect", userID)
-			return
-		}
-		for i, con := range c1 {
-			if con.ID() == c.ID() {
-				c1 = append(c1[:i], c1[i+1:]...)
-				break
-			}
-		}
-		connections[userID] = c1
 	})
 }
 
@@ -67,7 +39,7 @@ func websocketMessageHandler(userID string, logger *golog.Logger, userCon websoc
 			return
 		}
 		switch msg.Type {
-		case Chat:
+		case models.Chat:
 			chatHandler(userID, logger, msg.Message, userCon)
 		}
 	}
@@ -98,7 +70,7 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		TID:         clientChatMsg.TID,
 	}
 	var clntSvrMsg = models.ServerClientMessage{
-		Type:    ChatAck,
+		Type:    models.ChatAck,
 		Message: clientAckMsg,
 	}
 	marshalled, err := json.Marshal(clntSvrMsg)
@@ -110,43 +82,5 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		logger.Errorf("Unable to send the message: %v", err)
 	}
 
-	clntSvrMsg = models.ServerClientMessage{
-		Type:    Chat,
-		Message: chatMsg,
-	}
-	marshalled, err = json.Marshal(clntSvrMsg)
-	if err != nil {
-		logger.Errorf("Unable to marshal message: %v", err)
-		return
-	}
-
-	// Sending message to sender's other clients
-	c1, ok := connections[userID]
-	if !ok || len(c1) == 0 {
-		logger.Infof("%s is not online. Unable to send message", userID)
-		return
-	}
-	for _, con := range c1 {
-		if con.ID() != userCon.ID() {
-			err = con.EmitMessage(marshalled)
-			if err != nil {
-				logger.Errorf("Unable to send message: %v", err)
-			}
-		}
-	}
-
-	// Sending to recipient user's online clients
-	if userID != clientChatMsg.To {
-		c1, ok := connections[clientChatMsg.To]
-		if !ok || len(c1) == 0 {
-			logger.Infof("%s is not online. Unable to send message", clientChatMsg.To)
-			return
-		}
-		for _, con := range c1 {
-			err = con.EmitMessage(marshalled)
-			if err != nil {
-				logger.Errorf("Unable to send message: %v", err)
-			}
-		}
-	}
+	models.PublishChatMessage(chatMsg, userCon.ID())
 }

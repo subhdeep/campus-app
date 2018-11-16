@@ -6,6 +6,11 @@ import (
 
 type MessageType string
 
+const (
+	Chat    MessageType = "chat"
+	ChatAck             = "chat-ack"
+)
+
 // ServerClientMessage is the generic message exchanged between
 // client and server.
 type ServerClientMessage struct {
