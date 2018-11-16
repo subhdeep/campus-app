@@ -16,5 +16,5 @@ func main() {
 	router.CampusAppRoutes(app)
 
 	// listen and serve on http://0.0.0.0:8080.
-	app.Run(iris.Addr(fmt.Sprintf(":%d", config.HTTPPort)))
+	app.Run(iris.Addr(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort)))
 }

@@ -23,4 +23,5 @@ func init() {
 
 	db.AutoMigrate(&ChatMessage{})
 	db.AutoMigrate(&RecentMessage{})
+	db.AutoMigrate(&PushNotification{})
 }

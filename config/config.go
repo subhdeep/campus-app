@@ -26,6 +26,8 @@ var PGPort int
 var PGDB string
 var PGUser string
 
+var VAPIDKey string
+
 // InitConfig initialises the configuration of the app
 func init() {
 	viper.SetConfigName("config")
@@ -48,4 +50,6 @@ func init() {
 	PGHost = viper.GetString("postgres.host")
 	PGUser = viper.GetString("postgres.username")
 	PGDB = viper.GetString("postgres.dbname")
+
+	VAPIDKey = viper.GetString("vapid.key")
 }

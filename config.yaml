@@ -13,3 +13,5 @@ postgres:
   host: "localhost"
   port: 26257
   dbname: "web_app"
+vapid:
+  key: "Xg0DWMQNFI4O1p46w5hZ-c922HN0R2bkioDuSLdffnE"

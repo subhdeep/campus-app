@@ -94,5 +94,6 @@ func processChatMessage(chatMessage ChatMessage, connID ConnID) {
 	// Sending to recipient user's online clients
 	if chatMessage.From != chatMessage.To {
 		sendToUsername(marshalled, Username(chatMessage.To), "")
+		sendPushNotification(Username(chatMessage.To), chatMessage)
 	}
 }
