@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+
+  roach:
+    image: cockroachdb/cockroach:v2.0.6
+    command: start --insecure
+    ports:
+      - 26257:26257
+      - 8080:8080
+
+  redis-master:
+    image: bitnami/redis:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  redis:
+    image: bitnami/redis-sentinel:latest
+    links:
+      - redis-master:mymaster
+    ports:
+      - 26379:26379
+    environment:
+      - REDIS_MASTER_HOST=mymaster
+
+  roach-init:
+    image: cockroachdb/cockroach:v2.0.6
+    links:
+      - roach
+    environment:
+      - COCKROACH_HOST=roach
+    command: sql --insecure --execute='CREATE DATABASE IF NOT EXISTS "web_app";CREATE USER IF NOT EXISTS "subho";GRANT ALL ON DATABASE "web_app" TO "subhdo";'
+
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.103.0/24

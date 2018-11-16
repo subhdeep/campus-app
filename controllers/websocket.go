@@ -14,9 +14,13 @@ var ws *websocket.Server
 
 var connections map[string][]websocket.Connection
 
+// MessageType constants
 const (
-	Chat    models.MessageType = "chat"
-	ChatAck models.MessageType = "chat-ack"
+	Chat       models.MessageType = "chat"
+	ChatAck                       = "chat-ack"
+	WebRTC                        = "webrtc"
+	WebRTCAck                     = "webrtc-ack"
+	WebRTCInit                    = "webrtc-init"
 )
 
 func init() {
@@ -69,8 +73,69 @@ func websocketMessageHandler(userID string, logger *golog.Logger, userCon websoc
 		switch msg.Type {
 		case Chat:
 			chatHandler(userID, logger, msg.Message, userCon)
+		case WebRTC:
+			webRTCHandler(userID, logger, msg.Message, userCon)
+		case WebRTCAck:
+			webRTCAckHandler(userID, logger, msg.Message, userCon)
+		case WebRTCInit:
+			webRTCInitHandler(userID, logger, msg.Message, userCon)
 		}
 	}
+}
+
+func webRTCHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	var webRTCBytes []byte
+	webRTCBytes, err := json.Marshal(msg)
+	if err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	var webRTC models.WebRTC
+	if err := json.Unmarshal(webRTCBytes, &webRTC); err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+
+	webRTC.FromID = models.ConnID(userCon.ID())
+	// TODO: Forward this message to webRTC.ToID
+}
+
+func webRTCInitHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	var webRTCInitBytes []byte
+	webRTCInitBytes, err := json.Marshal(msg)
+	if err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	var webRTCInit models.WebRTCInit
+	if err := json.Unmarshal(webRTCInitBytes, &webRTCInit); err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+
+	webRTCInit.From = models.Username(userID)
+	webRTCInit.FromID = models.ConnID(userCon.ID())
+
+	// TODO: Forward this message to all clients of webRTCInit.To
+}
+
+func webRTCAckHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	var webRTCAckBytes []byte
+	webRTCAckBytes, err := json.Marshal(msg)
+	if err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	var webRTCAck models.WebRTCAck
+	if err := json.Unmarshal(webRTCAckBytes, &webRTCAck); err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+
+	webRTCAck.FromID = models.ConnID(userCon.ID())
+
+	// TODO: Forward this message to webRTCInit.ToID
+	// TODO: Forward this message to all clients of webRTCInit.From except userCon
 }
 
 func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
@@ -120,6 +185,8 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		return
 	}
 
+	// TODO: Forward this message to all clients of userID except userCon
+
 	// Sending message to sender's other clients
 	c1, ok := connections[userID]
 	if !ok || len(c1) == 0 {
@@ -135,9 +202,11 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		}
 	}
 
+	// TODO: Forward this message to all clients of clientChatMsg.To
+
 	// Sending to recipient user's online clients
-	if userID != clientChatMsg.To {
-		c1, ok := connections[clientChatMsg.To]
+	if models.Username(userID) != clientChatMsg.To {
+		c1, ok := connections[string(clientChatMsg.To)]
 		if !ok || len(c1) == 0 {
 			logger.Infof("%s is not online. Unable to send message", clientChatMsg.To)
 			return

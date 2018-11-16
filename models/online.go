@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// MarkOnline is used to mark a user as online
 func MarkOnline(userID string) {
 	var score = (float64)(time.Now().Unix())
 	var member = redis.Z{
@@ -19,6 +20,7 @@ func MarkOnline(userID string) {
 	}
 }
 
+// IsOnline checks if user is online
 func IsOnline(userID string) (bool, error) {
 	var currentscore = (float64)(time.Now().Unix())
 	cmd := client.ZScore("online-users", userID)

@@ -4,7 +4,14 @@ import (
 	"time"
 )
 
+// MessageType identifies the type of a message and how to handle it
 type MessageType string
+
+// Username type is for type checking
+type Username string
+
+// ConnID type is for type checking
+type ConnID string
 
 // ServerClientMessage is the generic message exchanged between
 // client and server.
@@ -16,12 +23,12 @@ type ServerClientMessage struct {
 // ClientChatMessage is the chat message sent from a client to the
 // server.
 type ClientChatMessage struct {
-	To   string `json:"to"`
-	Body string `json:"body"`
-	TID  int    `json:"tid"`
+	To   Username `json:"to"`
+	Body string   `json:"body"`
+	TID  int      `json:"tid"`
 }
 
-// ClientAckMessage is the acknowledment messaage sent from the server to the client
+// ClientAckMessage is the acknowledment message sent from the server to the client
 type ClientAckMessage struct {
 	ChatMessage
 	TID int `json:"tid"`
@@ -41,7 +48,7 @@ type ChatMessage struct {
 func CreateChatMessage(chatMsg *ClientChatMessage, userID string) ChatMessage {
 	msg := ChatMessage{
 		From: userID,
-		To:   chatMsg.To,
+		To:   string(chatMsg.To),
 		Body: chatMsg.Body,
 	}
 	db.Create(&msg)
