@@ -77,6 +77,36 @@ func PublishChatMessage(chatMsg ChatMessage, connID ConnID) {
 	client.Publish(ChatChannel, marshalled)
 }
 
+// PublishWebRTCMessage allows publishing a WebRTCMessage to a channel
+func PublishWebRTCMessage(msg WebRTCMessage) {
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("unexpected error %v", err)
+		return
+	}
+	client.Publish(WebRTCChannel, marshalled)
+}
+
+// PublishWebRTCAckMessage allows publishing a WebRTCAckMessage to a channel
+func PublishWebRTCAckMessage(msg WebRTCAckMessage) {
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("unexpected error %v", err)
+		return
+	}
+	client.Publish(WebRTCAckChannel, marshalled)
+}
+
+// PublishWebRTCInitMessage allows publishing a WebRTCInitMessage to a channel
+func PublishWebRTCInitMessage(msg WebRTCInitMessage) {
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("unexpected error %v", err)
+		return
+	}
+	client.Publish(WebRTCInitChannel, marshalled)
+}
+
 func processChatMessage(chatMessage ChatMessage, connID ConnID) {
 	clntSvrMsg := ServerClientMessage{
 		Type:    Chat,
@@ -96,4 +126,50 @@ func processChatMessage(chatMessage ChatMessage, connID ConnID) {
 		sendToUsername(marshalled, Username(chatMessage.To), "")
 		sendPushNotification(Username(chatMessage.To), chatMessage)
 	}
+}
+
+func processWebRTCInitMessage(msg WebRTCInitMessage) {
+	clntSvrMsg := ServerClientMessage{
+		Type:    WebRTCInit,
+		Message: msg,
+	}
+	marshalled, err := json.Marshal(clntSvrMsg)
+	if err != nil {
+		log.Printf("Unable to marshal message: %v", err)
+		return
+	}
+
+	// Forward this message to all clients of webRTCInit.To
+	if msg.From != msg.To {
+		sendToUsername(marshalled, msg.To, "")
+	}
+}
+
+func processWebRTCAckMessage(msg WebRTCAckMessage) {
+	clntSvrMsg := ServerClientMessage{
+		Type:    WebRTCAck,
+		Message: msg,
+	}
+	marshalled, err := json.Marshal(clntSvrMsg)
+	if err != nil {
+		log.Printf("Unable to marshal message: %v", err)
+		return
+	}
+
+	sendToConnID(marshalled, msg.ToID)
+	sendToUsername(marshalled, msg.From, msg.FromID)
+}
+
+func processWebRTCMessage(msg WebRTCMessage) {
+	clntSvrMsg := ServerClientMessage{
+		Type:    WebRTCAck,
+		Message: msg,
+	}
+	marshalled, err := json.Marshal(clntSvrMsg)
+	if err != nil {
+		log.Printf("Unable to marshal message: %v", err)
+		return
+	}
+
+	sendToConnID(marshalled, msg.ToID)
 }

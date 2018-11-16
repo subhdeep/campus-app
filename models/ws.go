@@ -10,8 +10,11 @@ type Username string
 type ConnID string
 
 const (
-	Chat    MessageType = "chat"
-	ChatAck             = "chat-ack"
+	Chat       MessageType = "chat"
+	ChatAck                = "chat-ack"
+	WebRTC                 = "webrtc"
+	WebRTCAck              = "webrtc-ack"
+	WebRTCInit             = "webrtc-init"
 )
 
 // ServerClientMessage is the generic message exchanged between
