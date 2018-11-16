@@ -9,6 +9,9 @@ import (
 
 // Connections map of the different client connected to the server
 var connections map[string][]websocket.Connection
+
+// WS is the main websocket server maintaining connections between various
+// clients
 var WS *websocket.Server
 
 type publishChatPayload struct {
@@ -21,6 +24,19 @@ func init() {
 	connections = make(map[string][]websocket.Connection)
 }
 
+func sendToUsername(msg []byte, username string, ignoring string) {
+	if c1, ok := connections[username]; ok {
+		for _, con := range c1 {
+			if con.ID() != ignoring {
+				if err := con.EmitMessage(msg); err != nil {
+					log.Printf("[warn] Unable to send message: %v", err)
+				}
+			}
+		}
+	}
+}
+
+// AddConnection allows adding a connection to our connections map
 func AddConnection(userID string, c websocket.Connection) {
 	connections[userID] = append(connections[userID], c)
 	c.OnDisconnect(func() {
@@ -39,6 +55,7 @@ func AddConnection(userID string, c websocket.Connection) {
 	})
 }
 
+// PublishChatMessage allows publishing a chat message to a channel
 func PublishChatMessage(chatMsg ChatMessage, conID string) {
 	payload := publishChatPayload{
 		ChatMessage: chatMsg,
@@ -50,4 +67,24 @@ func PublishChatMessage(chatMsg ChatMessage, conID string) {
 		return
 	}
 	client.Publish(ChatChannel, marshalled)
+}
+
+func processChatMessage(chatMessage ChatMessage, connID string) {
+	clntSvrMsg := ServerClientMessage{
+		Type:    Chat,
+		Message: chatMessage,
+	}
+	marshalled, err := json.Marshal(clntSvrMsg)
+	if err != nil {
+		log.Printf("Unable to marshal message: %v", err)
+		return
+	}
+
+	// Sending message to sender's other clients (ignoring connID)
+	sendToUsername(marshalled, chatMessage.From, connID)
+
+	// Sending to recipient user's online clients
+	if chatMessage.From != chatMessage.To {
+		sendToUsername(marshalled, chatMessage.To, "")
+	}
 }

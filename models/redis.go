@@ -36,7 +36,6 @@ func init() {
 	ch := pubsub.Channel()
 
 	go processChatChannel(ch)
-
 }
 
 func processChatChannel(ch <-chan *redis.Message) {
@@ -48,42 +47,6 @@ func processChatChannel(ch <-chan *redis.Message) {
 			log.Fatalf("Invalid Message %v", err)
 			continue
 		}
-		clntSvrMsg := ServerClientMessage{
-			Type:    Chat,
-			Message: payload.ChatMessage,
-		}
-		marshalled, err := json.Marshal(clntSvrMsg)
-		if err != nil {
-			log.Printf("Unable to marshal message: %v", err)
-			continue
-		}
-		// Sending message to sender's other clients
-		c1, ok := connections[payload.ChatMessage.From]
-		if ok {
-			for _, con := range c1 {
-				if con.ID() != payload.ID {
-					err = con.EmitMessage(marshalled)
-					if err != nil {
-						log.Printf("[warn] Unable to send message: %v", err)
-					}
-				}
-			}
-		}
-
-		// Sending to recipient user's online clients
-		if payload.ChatMessage.From != payload.ChatMessage.To {
-			c1, ok := connections[payload.ChatMessage.To]
-			if !ok || len(c1) == 0 {
-				log.Printf("[info] %s is not online. Unable to send message", payload.ChatMessage.To)
-				continue
-			}
-			for _, con := range c1 {
-				err = con.EmitMessage(marshalled)
-				if err != nil {
-					log.Printf("[warn] Unable to send message: %v", err)
-				}
-			}
-		}
-
+		processChatMessage(payload.ChatMessage, payload.ID)
 	}
 }
