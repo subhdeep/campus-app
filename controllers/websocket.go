@@ -22,7 +22,7 @@ func Websocket() context.Handler {
 func websocketConnectionHandler(c websocket.Connection) {
 	ctx := c.Context()
 	logger := ctx.Application().Logger()
-	userID := ctx.Values().Get("userID").(string)
+	userID := ctx.Values().Get("userID").(models.Username)
 	models.AddConnection(userID, c)
 	c.OnMessage(websocketMessageHandler(userID, logger, c))
 	c.OnError(func(err error) {
@@ -30,7 +30,7 @@ func websocketConnectionHandler(c websocket.Connection) {
 	})
 }
 
-func websocketMessageHandler(userID string, logger *golog.Logger, userCon websocket.Connection) func([]byte) {
+func websocketMessageHandler(userID models.Username, logger *golog.Logger, userCon websocket.Connection) func([]byte) {
 	return func(b []byte) {
 		models.MarkOnline(userID)
 		var msg models.ServerClientMessage
@@ -45,7 +45,7 @@ func websocketMessageHandler(userID string, logger *golog.Logger, userCon websoc
 	}
 }
 
-func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+func chatHandler(userID models.Username, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
 	// Get Client Chat Message from interface
 	var clientChatMsgBytes []byte
 	clientChatMsgBytes, err := json.Marshal(msg)
@@ -60,11 +60,11 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 	}
 
 	// Save message to the DB
-	chatMsg := models.CreateChatMessage(&clientChatMsg, userID)
-	models.CreateRecentMessage(chatMsg, userID, chatMsg.To)
+	chatMsg := models.CreateChatMessage(&clientChatMsg, string(userID))
+	models.CreateRecentMessage(chatMsg, string(userID), chatMsg.To)
 	logger.Infof("Message: %s from %s to %s", chatMsg.Body, userID, chatMsg.To)
 
-	// Sending to ack back to sender
+	// Sending ack back to sender
 	var clientAckMsg = models.ClientAckMessage{
 		ChatMessage: chatMsg,
 		TID:         clientChatMsg.TID,
@@ -82,5 +82,6 @@ func chatHandler(userID string, logger *golog.Logger, msg interface{}, userCon w
 		logger.Errorf("Unable to send the message: %v", err)
 	}
 
-	models.PublishChatMessage(chatMsg, userCon.ID())
+	// Publishing message to all interested peeps
+	models.PublishChatMessage(chatMsg, models.ConnID(userCon.ID()))
 }

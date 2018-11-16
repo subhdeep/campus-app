@@ -10,6 +10,7 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 
 	"github.com/subhdeep/campus-app/config"
+	"github.com/subhdeep/campus-app/models"
 )
 
 type loginCred struct {
@@ -78,9 +79,9 @@ func Logout(ctx iris.Context) {
 
 // Check is used to check if user is authenticated at the beginning of connection
 func Check(ctx iris.Context) {
-	username := ctx.Values().Get("userID").(string)
+	username := ctx.Values().Get("userID").(models.Username)
 	ctx.JSON(loginResponse{
-		Username: username,
+		Username: string(username),
 	})
 }
 

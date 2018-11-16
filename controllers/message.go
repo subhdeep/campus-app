@@ -10,7 +10,7 @@ import (
 )
 
 func GetMessages(ctx iris.Context) {
-	user := ctx.Values().Get("userID").(string)
+	user := ctx.Values().Get("userID").(models.Username)
 	otherUser := ctx.URLParam("username")
 	offsetParam := ctx.URLParam("offset")
 	limitParam := ctx.URLParam("limit")
@@ -38,7 +38,7 @@ func GetMessages(ctx iris.Context) {
 		}
 	}
 
-	messages := models.GetMessages(user, otherUser, offset, limit)
+	messages := models.GetMessages(string(user), otherUser, offset, limit)
 	if len(messages) == limit {
 		ctx.Header("Link", fmt.Sprintf("%s?username=%s&offset=%s&limit=%d", ctx.Path(), otherUser, messages[len(messages)-1].CreatedAt.Format(time.RFC3339Nano), limit))
 	}
@@ -46,7 +46,7 @@ func GetMessages(ctx iris.Context) {
 }
 
 func GetRecents(ctx iris.Context) {
-	user := ctx.Values().Get("userID").(string)
+	user := ctx.Values().Get("userID").(models.Username)
 	offsetParam := ctx.URLParam("offset")
 	limitParam := ctx.URLParam("limit")
 
@@ -73,11 +73,11 @@ func GetRecents(ctx iris.Context) {
 		}
 	}
 
-	messages := models.GetRecents(user, offset, limit)
+	messages := models.GetRecents(string(user), offset, limit)
 
 	var res = make([]models.RecentMessagePayload, 0, len(messages))
 	for _, msg := range messages {
-		if msg.To == user {
+		if msg.To == string(user) {
 			res = append(res, models.RecentMessagePayload{
 				UserID:       msg.From,
 				FirstMessage: msg,

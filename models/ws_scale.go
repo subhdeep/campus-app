@@ -8,7 +8,7 @@ import (
 )
 
 // Connections map of the different client connected to the server
-var connections map[string][]websocket.Connection
+var connections map[Username][]websocket.Connection
 
 // WS is the main websocket server maintaining connections between various
 // clients
@@ -16,18 +16,18 @@ var WS *websocket.Server
 
 type publishChatPayload struct {
 	ChatMessage ChatMessage
-	ID          string
+	ID          ConnID
 }
 
 func init() {
 	WS = websocket.New(websocket.Config{})
-	connections = make(map[string][]websocket.Connection)
+	connections = make(map[Username][]websocket.Connection)
 }
 
-func sendToUsername(msg []byte, username string, ignoring string) {
+func sendToUsername(msg []byte, username Username, ignoring ConnID) {
 	if c1, ok := connections[username]; ok {
 		for _, con := range c1 {
-			if con.ID() != ignoring {
+			if con.ID() != string(ignoring) {
 				if err := con.EmitMessage(msg); err != nil {
 					log.Printf("[warn] Unable to send message: %v", err)
 				}
@@ -36,8 +36,16 @@ func sendToUsername(msg []byte, username string, ignoring string) {
 	}
 }
 
+func sendToConnID(msg []byte, connID ConnID) {
+	if conn := WS.GetConnection(string(connID)); conn != nil {
+		if err := conn.EmitMessage(msg); err != nil {
+			log.Printf("[warn] Unable to send message: %v", err)
+		}
+	}
+}
+
 // AddConnection allows adding a connection to our connections map
-func AddConnection(userID string, c websocket.Connection) {
+func AddConnection(userID Username, c websocket.Connection) {
 	connections[userID] = append(connections[userID], c)
 	c.OnDisconnect(func() {
 		c1, ok := connections[userID]
@@ -56,10 +64,10 @@ func AddConnection(userID string, c websocket.Connection) {
 }
 
 // PublishChatMessage allows publishing a chat message to a channel
-func PublishChatMessage(chatMsg ChatMessage, conID string) {
+func PublishChatMessage(chatMsg ChatMessage, connID ConnID) {
 	payload := publishChatPayload{
 		ChatMessage: chatMsg,
-		ID:          conID,
+		ID:          connID,
 	}
 	marshalled, err := json.Marshal(payload)
 	if err != nil {
@@ -69,7 +77,7 @@ func PublishChatMessage(chatMsg ChatMessage, conID string) {
 	client.Publish(ChatChannel, marshalled)
 }
 
-func processChatMessage(chatMessage ChatMessage, connID string) {
+func processChatMessage(chatMessage ChatMessage, connID ConnID) {
 	clntSvrMsg := ServerClientMessage{
 		Type:    Chat,
 		Message: chatMessage,
@@ -81,10 +89,10 @@ func processChatMessage(chatMessage ChatMessage, connID string) {
 	}
 
 	// Sending message to sender's other clients (ignoring connID)
-	sendToUsername(marshalled, chatMessage.From, connID)
+	sendToUsername(marshalled, Username(chatMessage.From), connID)
 
 	// Sending to recipient user's online clients
 	if chatMessage.From != chatMessage.To {
-		sendToUsername(marshalled, chatMessage.To, "")
+		sendToUsername(marshalled, Username(chatMessage.To), "")
 	}
 }

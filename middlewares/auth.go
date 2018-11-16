@@ -20,14 +20,14 @@ var (
 
 // LoginAuthCred struct
 type loginAuthCred struct {
-	Username  string `json:"username" validate:"required"`
-	Timestamp string `json:"timestamp" validate:"required"`
+	Username  models.Username `json:"username" validate:"required"`
+	Timestamp string          `json:"timestamp" validate:"required"`
 }
 
 // IsAuthenticated is used to check if a request is authorized
 func IsAuthenticated(ctx iris.Context) {
 	loginAuth := loginAuthCred{
-		Username:  ctx.GetCookie("username", iris.CookieDecode(sc.Decode)),
+		Username:  models.Username(ctx.GetCookie("username", iris.CookieDecode(sc.Decode))),
 		Timestamp: ctx.GetCookie("timestamp", iris.CookieDecode(sc.Decode)),
 	}
 

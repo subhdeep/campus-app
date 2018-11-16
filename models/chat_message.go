@@ -4,34 +4,6 @@ import (
 	"time"
 )
 
-type MessageType string
-
-const (
-	Chat    MessageType = "chat"
-	ChatAck             = "chat-ack"
-)
-
-// ServerClientMessage is the generic message exchanged between
-// client and server.
-type ServerClientMessage struct {
-	Type    MessageType `json:"type"`
-	Message interface{} `json:"message"`
-}
-
-// ClientChatMessage is the chat message sent from a client to the
-// server.
-type ClientChatMessage struct {
-	To   string `json:"to"`
-	Body string `json:"body"`
-	TID  int    `json:"tid"`
-}
-
-// ClientAckMessage is the acknowledment messaage sent from the server to the client
-type ClientAckMessage struct {
-	ChatMessage
-	TID int `json:"tid"`
-}
-
 // ChatMessage Model
 type ChatMessage struct {
 	ID        string    `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
@@ -46,7 +18,7 @@ type ChatMessage struct {
 func CreateChatMessage(chatMsg *ClientChatMessage, userID string) ChatMessage {
 	msg := ChatMessage{
 		From: userID,
-		To:   chatMsg.To,
+		To:   string(chatMsg.To),
 		Body: chatMsg.Body,
 	}
 	db.Create(&msg)
