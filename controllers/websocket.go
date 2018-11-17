@@ -47,6 +47,10 @@ func websocketMessageHandler(userID models.Username, logger *golog.Logger, userC
 			webRTCAckHandler(userID, logger, msg.Message, userCon)
 		case models.WebRTCInit:
 			webRTCInitHandler(userID, logger, msg.Message, userCon)
+		case models.WebRTCReject:
+			webRTCRejectHandler(userID, logger, msg.Message, userCon)
+		case models.WebRTCCancel:
+			webRTCCancelHandler(userID, logger, msg.Message, userCon)
 		}
 	}
 }
@@ -140,4 +144,36 @@ func webRTCAckHandler(userID models.Username, logger *golog.Logger, msg interfac
 	webRTCAck.From = userID
 	webRTCAck.FromID = models.ConnID(userCon.ID())
 	models.PublishWebRTCAckMessage(webRTCAck)
+}
+
+func webRTCRejectHandler(userID models.Username, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	var webRTCRejectBytes []byte
+	webRTCRejectBytes, err := json.Marshal(msg)
+	if err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	var webRTCReject models.WebRTCRejectMessage
+	if err := json.Unmarshal(webRTCRejectBytes, &webRTCReject); err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	webRTCReject.From = userID
+	webRTCReject.FromID = models.ConnID(userCon.ID())
+	models.PublishWebRTCRejectMessage(webRTCReject)
+}
+
+func webRTCCancelHandler(userID models.Username, logger *golog.Logger, msg interface{}, userCon websocket.Connection) {
+	var webRTCCancelBytes []byte
+	webRTCCancelBytes, err := json.Marshal(msg)
+	if err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	var webRTCCancel models.WebRTCCancelMessage
+	if err := json.Unmarshal(webRTCCancelBytes, &webRTCCancel); err != nil {
+		logger.Errorf("Invalid message: %v", err)
+		return
+	}
+	models.PublishWebRTCCancelMessage(webRTCCancel)
 }

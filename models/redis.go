@@ -13,10 +13,12 @@ var client *redis.Client
 
 // Channel constants
 const (
-	ChatChannel       string = "chat-channel"
-	WebRTCChannel            = "webrtc-channel"
-	WebRTCAckChannel         = "webrtc-ack-channel"
-	WebRTCInitChannel        = "webrtc-init-channel"
+	ChatChannel         string = "chat-channel"
+	WebRTCChannel              = "webrtc-channel"
+	WebRTCAckChannel           = "webrtc-ack-channel"
+	WebRTCCancelChannel        = "webrtc-cancel-channel"
+	WebRTCInitChannel          = "webrtc-init-channel"
+	WebRTCRejectChannel        = "webrtc-reject-channel"
 )
 
 func init() {
@@ -34,7 +36,9 @@ func init() {
 	createChannel(ChatChannel, processChatChannel)
 	createChannel(WebRTCChannel, processWebRTCChannel)
 	createChannel(WebRTCAckChannel, processWebRTCAckChannel)
+	createChannel(WebRTCCancelChannel, processWebRTCCancelChannel)
 	createChannel(WebRTCInitChannel, processWebRTCInitChannel)
+	createChannel(WebRTCRejectChannel, processWebRTCRejectChannel)
 }
 
 func createChannel(name string, f func(<-chan *redis.Message)) {
@@ -93,5 +97,29 @@ func processWebRTCAckChannel(ch <-chan *redis.Message) {
 			continue
 		}
 		processWebRTCAckMessage(payload)
+	}
+}
+
+func processWebRTCRejectChannel(ch <-chan *redis.Message) {
+	for msg := range ch {
+		var payload WebRTCRejectMessage
+		err := json.Unmarshal([]byte(msg.Payload), &payload)
+		if err != nil {
+			log.Fatalf("Invalid Message %v", err)
+			continue
+		}
+		processWebRTCRejectMessage(payload)
+	}
+}
+
+func processWebRTCCancelChannel(ch <-chan *redis.Message) {
+	for msg := range ch {
+		var payload WebRTCCancelMessage
+		err := json.Unmarshal([]byte(msg.Payload), &payload)
+		if err != nil {
+			log.Fatalf("Invalid Message %v", err)
+			continue
+		}
+		processWebRTCCancelMessage(payload)
 	}
 }

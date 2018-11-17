@@ -107,6 +107,26 @@ func PublishWebRTCInitMessage(msg WebRTCInitMessage) {
 	client.Publish(WebRTCInitChannel, marshalled)
 }
 
+// PublishWebRTCRejectMessage allows publishing a WebRTCRejectMessage to a channel
+func PublishWebRTCRejectMessage(msg WebRTCRejectMessage) {
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("unexpected error %v", err)
+		return
+	}
+	client.Publish(WebRTCRejectChannel, marshalled)
+}
+
+// PublishWebRTCCancelMessage allows publishing a WebRTCCancelMessage to a channel
+func PublishWebRTCCancelMessage(msg WebRTCCancelMessage) {
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("unexpected error %v", err)
+		return
+	}
+	client.Publish(WebRTCCancelChannel, marshalled)
+}
+
 func processChatMessage(chatMessage ChatMessage, connID ConnID) {
 	clntSvrMsg := ServerClientMessage{
 		Type:    Chat,
@@ -172,4 +192,33 @@ func processWebRTCMessage(msg WebRTCMessage) {
 	}
 
 	sendToConnID(marshalled, msg.ToID)
+}
+
+func processWebRTCRejectMessage(msg WebRTCRejectMessage) {
+	clntSvrMsg := ServerClientMessage{
+		Type: WebRTCReject,
+	}
+	marshalled, err := json.Marshal(clntSvrMsg)
+	if err != nil {
+		log.Printf("Unable to marshal message: %v", err)
+		return
+	}
+
+	sendToConnID(marshalled, msg.ToID)
+	sendToUsername(marshalled, msg.From, msg.FromID)
+}
+
+func processWebRTCCancelMessage(msg WebRTCCancelMessage) {
+	clntSvrMsg := ServerClientMessage{
+		Type:    WebRTCCancel,
+		Message: msg,
+	}
+	marshalled, err := json.Marshal(clntSvrMsg)
+	if err != nil {
+		log.Printf("Unable to marshal message: %v", err)
+		return
+	}
+
+	// Forward this message to all clients of webRTCInit.To
+	sendToUsername(marshalled, msg.To, "")
 }

@@ -35,7 +35,6 @@ var pushOptions = webpush.Options{
 type notification struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
-	Icon  string `json:"icon"`
 }
 
 func sendPushNotification(to Username, chatMsg ChatMessage) {
@@ -43,9 +42,8 @@ func sendPushNotification(to Username, chatMsg ChatMessage) {
 	db.Where(PushNotification{User: string(to)}).Find(&subs)
 	var push = map[string]interface{}{
 		"notification": notification{
-			Title: "Campus App",
+			Title: "Campus Chat",
 			Body:  fmt.Sprintf("%s: %s", chatMsg.From, chatMsg.Body),
-			Icon:  "http://home.iitk.ac.in/~yashsriv/dp",
 		},
 	}
 	marshalled, err := json.Marshal(push)
