@@ -32,8 +32,10 @@ func IsOnline(userID Username) (bool, error) {
 		log.Printf("[warn] An error occurred while interacting with redis: %v", cmd.Err())
 		return false, cmd.Err()
 	}
-	if currentscore-value < (float64)(5*time.Minute/1000) {
+	if currentscore-value < onlineExpiry {
 		return true, nil
 	}
 	return false, nil
 }
+
+const onlineExpiry = 5.0 * 60
